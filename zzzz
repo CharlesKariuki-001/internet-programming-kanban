@@ -1,0 +1,51 @@
+CONTEXT & ARCHITECTURE OVERVIEW:
+I have a front-end React (Vite) application built in a dark-mode neon aesthetic. Lovable successfully generated the UI for a three-column Kanban Board (To Do, In Progress, Done) with interactive modals for creating/viewing/deleting tasks. It also created an API layer (`services/api.ts`) and a React Hook (`hooks/useTasks.ts`) that manages tasks locally using mock latency but is pre-wired to switch to real REST API calls (GET/POST/PATCH/DELETE) when a global "Cloud Sync" mode toggle is enabled and a `VITE_API_URL` environment variable is detected. 
+
+However, the application is currently a front-end prototype. The sidebar links (Dashboard, Analytics, Settings) are static, and there is absolutely no backend server or live database infrastructure.
+
+I need you to write the remaining production-ready code files and configurations to turn this into a 100% complete, functional full-stack product. Please provide the exact code, file structures, and implementation details for what is missing below:
+
+---
+
+### PART 1: THE BACKEND SYSTEM (Node.js + Express.js + Mongoose)
+Please generatve a comprehensive, single-file `server.js` meant to sit inside a root-level `/backend` directory. The backend must fulfill these requirements:
+
+1. DEPENDENCIES & CORE SETUP: Use commonJS (`require`) syntax. Configure and initialize `express`, `cors`, `dotenv`, and `mongoose`. Ensure CORS is configured properly to accept requests from localhost and production client URLs.
+2. DATABASE CONNECTION: Implement a secure `mongoose.connect()` function that reads from a `process.env.MONGO_URI` variable. Include connection success and error console logs, handling connection dropouts gracefully.
+3. DATA SCHEMA & MODEL: Create a Mongoose Schema named `TaskSchema` matching the exact front-end Data Transfer Object structure:
+   - title: String (Required)
+   - description: String
+   - status: String (Required, restricted via enum to: 'To Do', 'In Progress', 'Done')
+   - priority: String (Required, restricted via enum to: 'High', 'Medium', 'Low')
+   - dueDate: Date or String
+   - assigneeAvatar: String (Default fallback avatar link)
+4. REST API ENDPOINTS: Implement the following four clean JSON routing endpoints prefixed under `/api/tasks`:
+   - GET `/api/tasks`: Fetches all documents from MongoDB and returns them in an array.
+   - POST `/api/tasks`: Receives a JSON payload, creates a new task document, saves it to the database, and returns the newly created document.
+   - PATCH `/api/tasks/:id`: Finds a specific task by its MongoDB ID, applies updates (such as shifting its 'status' field when a user drags a card to a new column), and returns the updated task.
+   - DELETE `/api/tasks/:id`: Finds a task by ID, deletes it permanently from the collection, and returns a 200 success response.
+5. MIDDLEWARE & PORT: Include global `express.json()` parsing. Dynamically bind the app to `process.env.PORT || 5000`. Create a template `.env.example` file configuration containing placeholders for PORT and MONGO_URI.
+
+---
+
+### PART 2: FIXED CLIENT-SIDE FRONTEND ROUTING & VIEWS
+Because the frontend layout currently features dead sidebar navigation links, provide the modified React architecture to render separate views based on a tab state (`currentTab`). Generate clean, stylish, modular code components matching our dark neon look for the missing views:
+
+1. THE MULTI-PAGE ROUTING FIX: Show me how to update the sidebar container to track `currentTab` ('dashboard', 'boards', 'analytics', 'settings') on click, dynamically swapping out the main screen layout.
+2. DASHBOARD VIEW COMPONENT (`Dashboard.tsx`): Design an analytics home canvas. It must extract the task array data from the `useTasks` hook and display real-time summary widgets:
+   - A box showing "Total Active Tasks"
+   - A box showing "High Priority Tasks Alert"
+   - A dynamic chronological activity log feed showing tasks that are coming up soonest based on their `dueDate`.
+3. ANALYTICS VIEW COMPONENT (`Analytics.tsx`): Create a gorgeous reporting screen. Since external heavy charting libraries aren't configured yet, design beautiful pure Tailwind CSS visual data components:
+   - A horizontal grid of progress bars depicting column weight percentages (e.g., "30% of total tasks are in Done").
+   - A priority composition chart utilizing color-coded stacked row bars (Red for High, Amber for Medium, Cyan for Low) calculated using standard JavaScript `.filter()` array methods from the live task hook.
+4. SETTINGS PANEL COMPONENT (`Settings.tsx`): Build a settings panel containing:
+   - Profile Management: Input text boxes allowing a user to change their profile name string or select a neon mock avatar icon.
+   - Database Connection Panel: Form text field that saves a custom `API_URL` string to local storage, giving the student a visual interface to link their local front-end directly to their hosted server back-end.
+   - Hard Reset System: A danger-zone button titled "Wipe All Data" that flushes the local memory/mock data cache to completely reset the application layout.
+
+---
+
+### PART 3: REFACTORING & PRODUCTION EDGE CASES
+1. TOAST NOTIFICATIONS: Show me where and how to wrap the `useTasks` CRUD operations in a standard toast popup system (such as 'sonner' or a simple custom animated notification array component). Trigger success notifications when a card is successfully appended or wiped, and an alert toast if an HTTP request catches an error block.
+2. EMPTY STATE RENDERING: Inside the Kanban column render loop, show how to map an item check. If `columnTasks.length === 0`, render a beautiful, dashed container showing an elegant icon and text stating "No active tasks in this phase" rather than displaying a jarring blank gray void.
